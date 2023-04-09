@@ -11,4 +11,4 @@ services:
     volumes:
       - .:/app
     ports:
-      - "18000:80"
+      - "18000:8080"
