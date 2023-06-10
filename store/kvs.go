@@ -23,10 +23,15 @@ type KVS struct {
 	Cli *redis.Client
 }
 
+func (k *KVS) Save(ctx context.Context, key string, userID entity.UserID) error {
+	id := int64(userID)
+	return k.Cli.Set(ctx, key, id, 0).Err()
+}
+
 func (k KVS) Load(ctx context.Context, key string) (entity.UserID, error) {
 	id, err := k.Cli.Get(ctx, key).Int64()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get by %q: %w", key, err)
+		return 0, fmt.Errorf("failed to get by %q: %w", key, ErrNotFound)
 	}
 	return entity.UserID(id), nil
 }
