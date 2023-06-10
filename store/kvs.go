@@ -1,0 +1,32 @@
+package store
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/kawasaki124529/go_todo_app/config"
+	"github.com/kawasaki124529/go_todo_app/entity"
+)
+
+func NewKVS(ctx context.Context, cfg *config.Config) (KVS, error) {
+	cli := redis.NewClient(&redis.Options{
+		Addr: fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
+	})
+	if err := cli.Ping(ctx).Err(); err != nil {
+		return KVS{}, err
+	}
+	return KVS{Cli: cli}, nil
+}
+
+type KVS struct {
+	Cli *redis.Client
+}
+
+func (k KVS) Load(ctx context.Context, key string) (entity.UserID, error) {
+	id, err := k.Cli.Get(ctx, key).Int64()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get by %q: %w", key, err)
+	}
+	return entity.UserID(id), nil
+}
