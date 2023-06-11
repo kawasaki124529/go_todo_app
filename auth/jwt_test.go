@@ -173,7 +173,7 @@ func TestJWTer_GetToken_NG(t *testing.T) {
 
 			req := httptest.NewRequest(
 				http.MethodGet,
-				`https://github.com/budougumi0617`,
+				`https://github.com/kawasaki124529`,
 				nil,
 			)
 			req.Header.Set(`Authorization`, fmt.Sprintf(`Bearer %s`, signed))
