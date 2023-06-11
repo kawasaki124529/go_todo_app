@@ -104,3 +104,52 @@ func (j *JWTer) GetToken(ctx context.Context, r *http.Request) (jwt.Token, error
 	}
 	return token, nil
 }
+
+type userIDKey struct{}
+type roleKey struct{}
+
+func SetUserID(ctx context.Context, userID entity.UserID) context.Context {
+	return context.WithValue(ctx, userIDKey{}, userID)
+}
+
+func GetUserID(ctx context.Context) (entity.UserID, bool) {
+	userID, ok := ctx.Value(userIDKey{}).(entity.UserID)
+	return userID, ok
+}
+
+func SetRole(ctx context.Context, tok jwt.Token) context.Context {
+	role, ok := tok.Get(RoleKey)
+	if !ok {
+		return context.WithValue(ctx, roleKey{}, "")
+	}
+	return context.WithValue(ctx, roleKey{}, role)
+}
+
+func GetRole(ctx context.Context) (string, bool) {
+	role, ok := ctx.Value(roleKey{}).(string)
+	return role, ok
+}
+
+func (j *JWTer) FillContext(r *http.Request) (*http.Request, error) {
+	ctx := r.Context()
+	token, err := j.GetToken(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	uid, err := j.Store.Load(ctx, token.JwtID())
+	if err != nil {
+		return nil, err
+	}
+	ctx = SetUserID(ctx, uid)
+	ctx = SetRole(ctx, token)
+	clone := r.Clone(ctx)
+	return clone, nil
+}
+
+func IsAdmin(ctx context.Context) bool {
+	role, ok := GetRole(ctx)
+	if !ok {
+		return false
+	}
+	return role == "admin"
+}
